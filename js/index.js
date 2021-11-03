@@ -1,24 +1,50 @@
 // Declare global variables
-
+nameSubmit = true;
 
 // Build DOM interface variables
 const form = document.querySelector('form');
+const submit = document.getElementById('submit');
 const userList = document.getElementById('user-list');
 const reposList = document.getElementById('repos-list');
+const reset = document.getElementById('reset');
 
 // Set event listeners
-form.addEventListener('submit', e => nameSubmit(e));
+form.addEventListener('submit', e => search(e));
+reset.addEventListener('click', e => resetPage(e));
+
+// Function to reset page
+function resetPage() {
+  userList.replaceChildren();
+  reposList.replaceChildren();
+  reset.hidden = true;
+  nameSubmit = true;
+  submit.value = 'Search Users'
+}
 
 // Function to submit user-provided name for search
-function nameSubmit(e) {
+function search(e) {
   e.preventDefault();
-  fetch(`https://api.github.com/search/users?q=${e.target.search.value}`, {
-    Headers: {
-      Accept: 'application/vnd.github.v3+json'
-    }
-  })
-  .then(resp => resp.json())
-  .then(json => publishNames(json));
+  if (nameSubmit) {
+    resetPage();
+    fetch(`https://api.github.com/search/users?q=${e.target.search.value}`, {
+      Headers: {
+        Accept: 'application/vnd.github.v3+json'
+      }
+    })
+    .then(resp => resp.json())
+    .then(json => publishNames(json));
+  } else {
+    reposList.replaceChildren();
+    fetch(`https://api.github.com/search/repositories?q=${e.target.search.value}`, {
+      Headers: {
+        Accept: 'application/vnd.github.v3+json'
+      }
+    })
+    .then(resp => resp.json())
+    .then(json => addData(json.items));
+  }
+  reset.hidden = false;
+  form.reset();
 }
 
 // Function to cycle through all names returned by search
@@ -52,8 +78,10 @@ function addPerson(object) {
 
 // Sets up the more info button
 function formatButton(btn, obj) {
-  btn.textContent = 'More info';
+  btn.textContent = 'Show all Repos';
   btn.addEventListener('click', e => {
+    nameSubmit = false;
+    submit.value = 'Search Repos';
     fetch(`https://api.github.com/users/${obj}/repos`, {
       Headers: {
         Accept: 'application/vnd.github.v3+json'
@@ -80,4 +108,9 @@ function addRepo(repo) {
   newLink.textContent = repo.name;
   newLi.appendChild(newLink);
   reposList.appendChild(newLi);
+}
+
+// Prints data
+function printData(input) {
+  console.log(input);
 }
